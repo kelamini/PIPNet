@@ -1,8 +1,12 @@
-import cv2, os
+import os
+import os.path as osp
 import sys
 sys.path.insert(0, 'FaceBoxesV2')
 sys.path.insert(0, '..')
 import numpy as np
+import cv2
+from glob import glob
+from tqdm import tqdm
 import pickle
 import importlib
 from math import floor
@@ -31,7 +35,7 @@ if not len(sys.argv) == 3:
 experiment_name = sys.argv[1].split('/')[-1][:-3]
 data_name = sys.argv[1].split('/')[-2]
 config_path = '.experiments.{}.{}'.format(data_name, experiment_name)
-image_file = sys.argv[2]
+image_dir = sys.argv[2]
 
 my_config = importlib.import_module(config_path, package='PIPNet')
 Config = getattr(my_config, 'Config')
@@ -125,9 +129,12 @@ def demo_image(image_file, net, preprocess, input_size, net_stride, num_nb, use_
             x_pred = lms_pred_merge[i*2] * det_width
             y_pred = lms_pred_merge[i*2+1] * det_height
             cv2.circle(image, (int(x_pred)+det_xmin, int(y_pred)+det_ymin), 1, (0, 0, 255), 2)
-    #cv2.imwrite('images/1_out.jpg', image)
-    cv2.imshow('1', image)
-    cv2.waitKey(0)
+    save_path = osp.join("output", "image_infer", osp.basename(image_file))
+    cv2.imwrite(save_path, image)
+    # cv2.imshow('1', image)
+    # cv2.waitKey(0)
         
-
-demo_image(image_file, net, preprocess, cfg.input_size, cfg.net_stride, cfg.num_nb, cfg.use_gpu, device)
+img_path_list = sorted(glob(f"{image_dir}/*.jpg"))
+print("====> img_list len: ", len(img_path_list))
+for img_path in tqdm(img_path_list):
+    demo_image(img_path, net, preprocess, cfg.input_size, cfg.net_stride, cfg.num_nb, cfg.use_gpu, device)
